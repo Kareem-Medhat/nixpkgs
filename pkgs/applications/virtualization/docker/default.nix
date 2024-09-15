@@ -296,8 +296,8 @@ rec {
 
   docker_25 = callPackage dockerGen rec {
     version = "25.0.6";
-    cliRev = "v25.0.5";
-    cliHash = "sha256-CACMi3bXUN6oGc2f/Z+lNQqMgQ4llRWPRKgijdpiPGg=";
+    cliRev = "v${version}";
+    cliHash = "sha256-7ZKjlONL5RXEJZrvssrL1PQMNANP0qTw4myGKdtd19U=";
     mobyRev = "v${version}";
     mobyHash = "sha256-+zkhUMeVD3HNq8WrWQmLskq+HykvD5kzSACmf67YbJE=";
     runcRev = "v1.1.12";
@@ -323,15 +323,15 @@ rec {
   };
 
   docker_27 = callPackage dockerGen rec {
-    version = "27.1.1";
+    version = "27.2.0";
     cliRev = "v${version}";
-    cliHash = "sha256-r9figEMYHHSbMYVFiw7GUMzjZBhlF+jyZqKixyCpoQ0=";
+    cliHash = "sha256-Fa1EUwJjxh5jzhQJ4tllDZBfB7KACHDEe9ETVzMfUNY=";
     mobyRev = "v${version}";
-    mobyHash = "sha256-LuCEdQQ3eWt8VyzmWkQTxlxTok9h/UlACTVls5LcI7g=";
+    mobyHash = "sha256-grxKlsbhxumQZNOyM96aURSiVFE1Fe5NFxUoPzFX/Qk=";
     runcRev = "v1.1.13";
     runcHash = "sha256-RQsM8Q7HogDVGbNpen3wxXNGR9lfqmNhkXTRoC+LBk8=";
-    containerdRev = "v1.7.20";
-    containerdHash = "sha256-Q9lTzz+G5PSoChy8MZtbOpO81AyNWXC+CgGkdOg14uY=";
+    containerdRev = "v1.7.21";
+    containerdHash = "sha256-cL1RKFg+B2gTPMg963DKup5BCLLgF9t9VZn2WlmmWPI=";
     tiniRev = "v0.19.0";
     tiniHash = "sha256-ZDKu/8yE5G0RYFJdhgmCdN3obJNyRWv6K/Gd17zc1sI=";
   };

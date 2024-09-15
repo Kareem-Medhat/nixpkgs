@@ -1,23 +1,32 @@
 {
   lib,
-  buildGoModule,
+  fetchpatch,
+  buildGo123Module,
   fetchFromGitHub,
   git,
   nix-update-script,
 }:
 
-buildGoModule rec {
+buildGo123Module rec {
   pname = "git-spice";
-  version = "0.3.0";
+  version = "0.5.2";
 
   src = fetchFromGitHub {
     owner = "abhinav";
     repo = "git-spice";
     rev = "refs/tags/v${version}";
-    hash = "sha256-BYIq+12piA0WgfwVSB6P6CKC81icAY/P4/pv2ZMj5N8=";
+    hash = "sha256-ftNLe/3akvk6nUrseBqpbJQSiUPEJO6cTEc7uEBKX3k=";
   };
 
-  vendorHash = "sha256-AIqy0OQsYRStbFLv2L8m4R0k1tr5fVM1FeMFn90yFoY=";
+  vendorHash = "sha256-f7bjlTVwCFoQrgbeyAvsVAS6vy5uE/AvMGKEutE1lfs=";
+
+  # Fixes flaky test. Remove next release.
+  patches = [
+    (fetchpatch {
+      url = "https://github.com/abhinav/git-spice/commit/92c28474bab81881443129e4a8e9bfc3f1564931.patch";
+      hash = "sha256-6v++jG7Wm6awqHRiNzwjX25BB8X9yGYhSzcUDNQKJ7k=";
+    })
+  ];
 
   subPackages = [ "." ];
 

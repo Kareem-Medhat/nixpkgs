@@ -10,6 +10,7 @@
   substituteAll,
   fetchFromGitHub,
   fetchpatch,
+  fetchpatch2,
   overrideCC,
   wrapCCWith,
   wrapBintoolsWith,
@@ -74,7 +75,238 @@ let
       p:
       builtins.path {
         name = builtins.baseNameOf p;
-        path = "${metadata.versionDir}/${p}";
+        path =
+          let
+            patches = {
+              "clang/gnu-install-dirs.patch" = [
+                {
+                  before = "14";
+                  path = ../12;
+                }
+                {
+                  after = "19";
+                  before = "20";
+                  path = ../19;
+                }
+                {
+                  after = "20";
+                  path = ../git;
+                }
+              ];
+              "clang/purity.patch" = [
+                {
+                  after = "18";
+                  path = ../18;
+                }
+                {
+                  before = "17";
+                  after = "15";
+                  path = ../15;
+                }
+                {
+                  before = "16";
+                  path = ../12;
+                }
+              ];
+              "lld/add-table-base.patch" = [
+                {
+                  after = "16";
+                  path = ../16;
+                }
+              ];
+              "lld/gnu-install-dirs.patch" = [
+                {
+                  after = "18";
+                  path = ../18;
+                }
+                {
+                  before = "14";
+                  path = ../12;
+                }
+              ];
+              "llvm/gnu-install-dirs.patch" = [
+                {
+                  after = "18";
+                  path = ../18;
+                }
+              ];
+              "llvm/gnu-install-dirs-polly.patch" = [
+                {
+                  after = "18";
+                  path = ../18;
+                }
+                {
+                  before = "18";
+                  after = "14";
+                  path = ../14;
+                }
+              ];
+              "llvm/llvm-lit-cfg-add-libs-to-dylib-path.patch" = [
+                {
+                  before = "17";
+                  after = "15";
+                  path = ../15;
+                }
+                {
+                  after = "17";
+                  path = ../17;
+                }
+              ];
+              "llvm/lit-shell-script-runner-set-dyld-library-path.patch" = [
+                {
+                  after = "18";
+                  path = ../18;
+                }
+                {
+                  after = "16";
+                  before = "18";
+                  path = ../16;
+                }
+              ];
+              "llvm/polly-lit-cfg-add-libs-to-dylib-path.patch" = [
+                {
+                  after = "15";
+                  path = ../15;
+                }
+              ];
+              "libcxx/0001-darwin-10.12-mbstate_t-fix.patch" = [
+                {
+                  after = "18";
+                  path = ../18;
+                }
+              ];
+              "libunwind/gnu-install-dirs.patch" = [
+                {
+                  before = "17";
+                  after = "15";
+                  path = ../15;
+                }
+              ];
+              "compiler-rt/X86-support-extension.patch" = [
+                {
+                  after = "15";
+                  path = ../15;
+                }
+                {
+                  before = "15";
+                  path = ../12;
+                }
+              ];
+              "compiler-rt/armv7l.patch" = [
+                {
+                  before = "15";
+                  after = "13";
+                  path = ../13;
+                }
+              ];
+              "compiler-rt/gnu-install-dirs.patch" = [
+                {
+                  before = "14";
+                  path = ../12;
+                }
+                {
+                  after = "13";
+                  before = "15";
+                  path = ../14;
+                }
+                {
+                  after = "15";
+                  before = "17";
+                  path = ../15;
+                }
+                {
+                  after = "16";
+                  path = ../17;
+                }
+              ];
+              "compiler-rt/darwin-targetconditionals.patch" = [
+                {
+                  after = "13";
+                  path = ../13;
+                }
+              ];
+              "compiler-rt/codesign.patch" = [
+                {
+                  after = "13";
+                  path = ../13;
+                }
+              ];
+              "compiler-rt/normalize-var.patch" = [
+                {
+                  after = "16";
+                  path = ../16;
+                }
+                {
+                  before = "16";
+                  path = ../12;
+                }
+              ];
+              "lldb/procfs.patch" = [
+                {
+                  after = "15";
+                  path = ../15;
+                }
+                {
+                  before = "15";
+                  path = ../12;
+                }
+              ];
+              "lldb/cpu_subtype_arm64e_replacement.patch" = [
+                {
+                  after = "13";
+                  path = ../13;
+                }
+              ];
+              "lldb/resource-dir.patch" = [
+                {
+                  before = "16";
+                  path = ../12;
+                }
+              ];
+              "openmp/fix-find-tool.patch" = [
+                {
+                  after = "17";
+                  before = "19";
+                  path = ../17;
+                }
+              ];
+              "openmp/run-lit-directly.patch" = [
+                {
+                  after = "16";
+                  path = ../16;
+                }
+                {
+                  after = "14";
+                  before = "16";
+                  path = ../14;
+                }
+              ];
+            };
+
+            constraints = patches."${p}" or null;
+            matchConstraint =
+              {
+                before ? null,
+                after ? null,
+                path,
+              }:
+              let
+                check = fn: value: if value == null then true else fn release_version value;
+                matchBefore = check lib.versionOlder before;
+                matchAfter = check lib.versionAtLeast after;
+              in
+              matchBefore && matchAfter;
+
+            patchDir =
+              toString
+                (
+                  if constraints == null then
+                    { path = metadata.versionDir; }
+                  else
+                    (lib.findFirst matchConstraint { path = metadata.versionDir; } constraints)
+                ).path;
+          in
+          "${patchDir}/${p}";
       };
   };
 
@@ -89,9 +321,7 @@ let
         }
       );
     in
-    {
-      llef = callPackage ./lldb-plugins/llef.nix { };
-    }
+    lib.recurseIntoAttrs { llef = callPackage ./lldb-plugins/llef.nix { }; }
   );
 
   tools = lib.makeExtensible (
@@ -377,9 +607,35 @@ let
                   (_: _: { name = "resource-dir.patch"; })
               ) { };
             in
-            lib.optional (lib.versionOlder metadata.release_version "16")
+            lib.optionals (lib.versionOlder metadata.release_version "15") [
+              # Fixes for SWIG 4
+              (fetchpatch2 {
+                url = "https://github.com/llvm/llvm-project/commit/81fc5f7909a4ef5a8d4b5da2a10f77f7cb01ba63.patch?full_index=1";
+                stripLen = 1;
+                hash = "sha256-Znw+C0uEw7lGETQLKPBZV/Ymo2UigZS+Hv/j1mUo7p0=";
+              })
+              (fetchpatch2 {
+                url = "https://github.com/llvm/llvm-project/commit/f0a25fe0b746f56295d5c02116ba28d2f965c175.patch?full_index=1";
+                stripLen = 1;
+                hash = "sha256-QzVeZzmc99xIMiO7n//b+RNAvmxghISKQD93U2zOgFI=";
+              })
+            ]
+            ++ lib.optionals (lib.versionOlder metadata.release_version "16") [
+              # Fixes for SWIG 4
+              (fetchpatch2 {
+                url = "https://github.com/llvm/llvm-project/commit/ba35c27ec9aa9807f5b4be2a0c33ca9b045accc7.patch?full_index=1";
+                stripLen = 1;
+                hash = "sha256-LXl+WbpmWZww5xMDrle3BM2Tw56v8k9LO1f1Z1/wDTs=";
+              })
+              (fetchpatch2 {
+                url = "https://github.com/llvm/llvm-project/commit/9ec115978ea2bdfc60800cd3c21264341cdc8b0a.patch?full_index=1";
+                stripLen = 1;
+                hash = "sha256-u0zSejEjfrH3ZoMFm1j+NVv2t5AP9cE5yhsrdTS1dG4=";
+              })
+
               # FIXME: do we need this after 15?
               (metadata.getVersionFile "lldb/procfs.patch")
+            ]
             ++ lib.optional (lib.versionOlder metadata.release_version "17") resourceDirPatch
             ++ lib.optional (lib.versionOlder metadata.release_version "14") (
               metadata.getVersionFile "lldb/gnu-install-dirs.patch"
@@ -471,9 +727,12 @@ let
               && stdenv.targetPlatform.useLLVM or false
             ) "-lunwind"
             ++ lib.optional stdenv.targetPlatform.isWasm "-fno-exceptions";
-          nixSupport.cc-ldflags = lib.optionals (
-            !stdenv.targetPlatform.isWasm && !stdenv.targetPlatform.isFreeBSD
-          ) [ "-L${targetLlvmLibraries.libunwind}/lib" ];
+          nixSupport.cc-ldflags =
+            lib.optionals (!stdenv.targetPlatform.isWasm && !stdenv.targetPlatform.isFreeBSD)
+              (
+                [ "-L${targetLlvmLibraries.libunwind}/lib" ]
+                ++ lib.optional (lib.versionAtLeast metadata.release_version "17") "--undefined-version"
+              );
         }
       );
 
@@ -694,13 +953,11 @@ let
           ./compiler-rt/armv6-scudo-no-yield.patch
           ./compiler-rt/armv6-scudo-libatomic.patch
         ]
-        ++ lib.optional (lib.versionAtLeast metadata.release_version "19") (
-          fetchpatch {
-            url = "https://github.com/llvm/llvm-project/pull/99837/commits/14ae0a660a38e1feb151928a14f35ff0f4487351.patch";
-            hash = "sha256-JykABCaNNhYhZQxCvKiBn54DZ5ZguksgCHnpdwWF2no=";
-            relative = "compiler-rt";
-          }
-        );
+        ++ lib.optional (lib.versionAtLeast metadata.release_version "19") (fetchpatch {
+          url = "https://github.com/llvm/llvm-project/pull/99837/commits/14ae0a660a38e1feb151928a14f35ff0f4487351.patch";
+          hash = "sha256-JykABCaNNhYhZQxCvKiBn54DZ5ZguksgCHnpdwWF2no=";
+          relative = "compiler-rt";
+        });
     in
     {
       compiler-rt-libc = callPackage ./compiler-rt (
@@ -731,6 +988,7 @@ let
 
       compiler-rt-no-libc = callPackage ./compiler-rt {
         patches = compiler-rtPatches;
+        doFakeLibgcc = stdenv.hostPlatform.useLLVM or false;
         stdenv =
           if stdenv.hostPlatform.isDarwin && stdenv.hostPlatform == stdenv.buildPlatform then
             stdenv
@@ -834,9 +1092,9 @@ let
 
       openmp = callPackage ./openmp {
         patches =
-          lib.optional (lib.versionAtLeast metadata.release_version "15") (
-            metadata.getVersionFile "openmp/fix-find-tool.patch"
-          )
+          lib.optional (
+            lib.versionAtLeast metadata.release_version "15" && lib.versionOlder metadata.release_version "19"
+          ) (metadata.getVersionFile "openmp/fix-find-tool.patch")
           ++ lib.optional (
             lib.versionAtLeast metadata.release_version "14" && lib.versionOlder metadata.release_version "18"
           ) (metadata.getVersionFile "openmp/gnu-install-dirs.patch")
